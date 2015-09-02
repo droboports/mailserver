@@ -1,0 +1,144 @@
+import_environment = TZ
+protocols = imap pop3
+listen = *, ::
+log_path = /tmp/DroboApps/mailserver/dovecot.log
+shutdown_clients = yes
+
+default_process_limit = 100
+default_client_limit = 1000
+default_vsz_limit = 256M
+
+base_dir = /mnt/DroboFS/Shares/DroboApps/mailserver/var/run/dovecot
+mail_temp_dir = /mnt/DroboFS/System/mail/mailserver/var/spool/dovecot
+mail_location = maildir:/mnt/DroboFS/System/mail/vmail/%u/
+maildir_copy_with_hardlinks = yes
+
+auth_username_chars = abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890.-_@
+default_login_user = dovenull
+default_internal_user = dovecot
+
+first_valid_uid = 5000
+last_valid_gid = 5000
+mail_uid = 5000
+mail_gid = 5000
+mail_privileged_group = vmail
+mail_access_groups = vmail
+
+auth_mechanisms = plain login
+disable_plaintext_auth = yes
+ssl = yes
+ssl_protocols = !SSLv2
+ssl_cert = </mnt/DroboFS/System/mail/certs/cert.pem
+ssl_key = </mnt/DroboFS/System/mail/certs/key.pem
+#ssl_require_crl = yes
+#ssl_client_ca_dir =
+#ssl_client_ca_file =
+#ssl_verify_client_cert = no
+#ssl_cert_username_field = commonName
+
+mail_plugin_dir = /mnt/DroboFS/Shares/DroboApps/mailserver/lib/dovecot
+#mail_plugins = quota
+mail_attachment_dir = /mnt/DroboFS/System/mail/attach
+mail_attachment_min_size = 128k
+mail_attachment_fs = sis-queue posix
+mail_attachment_hash = %{sha1}
+
+namespace inbox {
+  type = private
+  inbox = yes
+  mailbox Drafts {
+    auto = create
+    special_use = \Drafts
+  }
+  mailbox Junk {
+    auto = create
+    special_use = \Junk
+  }
+  mailbox Sent {
+    auto = create
+    special_use = \Sent
+  }
+  mailbox Trash {
+    auto = create
+    special_use = \Trash
+  }
+}
+
+protocol imap {
+  #mail_plugins = $mail_plugins imap_quota
+  imap_client_workarounds = delay-newmail tb-extra-mailbox-sep
+}
+
+protocol pop3 {
+  #mail_plugins = $mail_plugins
+  pop3_client_workarounds = outlook-no-nuls oe-ns-eoh
+}
+
+protocol lda {
+  #mail_plugins = $mail_plugins
+  postmaster_address = root@localhost.localdomain
+  hostname = localhost.localdomain
+  auth_socket_path = /mnt/DroboFS/Shares/DroboApps/mailserver/var/run/dovecot/auth-userdb
+  sendmail_path = /mnt/DroboFS/Shares/DroboApps/mailserver/sbin/sendmail
+  log_path = /tmp/DroboApps/mailserver/dovecot.log
+}
+
+service imap-login {
+  inet_listener imap {
+    port = 143
+  }
+  inet_listener imaps {
+    port = 993
+    ssl = yes
+  }
+}
+
+service pop3-login {
+  inet_listener pop3 {
+    port = 110
+  }
+  inet_listener pop3s {
+    port = 995
+    ssl = yes
+  }
+}
+
+service auth {
+  unix_listener auth-userdb {
+    mode = 0660
+    user = vmail
+    group = vmail
+  }
+  unix_listener /mnt/DroboFS/Shares/DroboApps/mailserver/var/spool/postfix/private/auth {
+    group = postfix
+    mode = 0660
+    user = postfix
+  }
+}
+
+service dict {
+  unix_listener dict {
+    mode = 0660
+    user = vmail
+    group = vmail
+  }
+}
+
+plugin {
+  quota = dict:User quota::proxy::quota
+}
+
+userdb {
+  args = /mnt/DroboFS/Shares/DroboApps/mailserver/etc/dovecot/dovecot-sql.conf.ext
+  driver = sql
+}
+
+passdb {
+  args = /mnt/DroboFS/Shares/DroboApps/mailserver/etc/dovecot/dovecot-sql.conf.ext
+  driver = sql
+}
+
+dict {
+  quota = sqlite:/mnt/DroboFS/Shares/DroboApps/mailserver/etc/dovecot/dovecot-dict-sql.conf.ext
+  expire = sqlite:/mnt/DroboFS/Shares/DroboApps/mailserver/etc/dovecot/dovecot-dict-sql.conf.ext
+}

@@ -1,0 +1,2 @@
+dbpath = /mnt/DroboFS/System/mail/modoboa.sqlite
+query = SELECT '450 Requested mail action not taken: mailbox unavailable' FROM admin_mailbox mb INNER JOIN admin_domain dom ON mb.domain_id=dom.id INNER JOIN admin_mailboxoperation mbop ON mbop.mailbox_id=mb.id WHERE dom.name='%d' AND mb.address='%u' LIMIT 1

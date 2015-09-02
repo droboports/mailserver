@@ -1,0 +1,106 @@
+command_directory = /mnt/DroboFS/Shares/DroboApps/mailserver/sbin
+daemon_directory = /mnt/DroboFS/Shares/DroboApps/mailserver/libexec/postfix
+data_directory = /mnt/DroboFS/Shares/DroboApps/mailserver/var/run/postfix
+html_directory = no
+mailq_path = /mnt/DroboFS/Shares/DroboApps/mailserver/bin/mailq
+manpage_directory = /mnt/DroboFS/Shares/DroboApps/mailserver/man
+newaliases_path = /mnt/DroboFS/Shares/DroboApps/mailserver/bin/newaliases
+queue_directory = /mnt/DroboFS/Shares/DroboApps/mailserver/var/spool/postfix
+readme_directory = no
+sample_directory = /mnt/DroboFS/Shares/DroboApps/mailserver/etc/postfix
+sendmail_path = /mnt/DroboFS/Shares/DroboApps/mailserver/sbin/sendmail
+#shlib_directory = /mnt/DroboFS/Shares/DroboApps/mailserver/lib/postfix
+
+mail_owner = postfix
+default_privs = postdrop
+setgid_group = postdrop
+
+inet_protocols = ipv4 ipv6
+inet_interfaces = all
+myhostname = localhost
+mydomain = localdomain
+append_dot_mydomain = no
+mydestination =
+mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128
+mynetworks_style = host
+relay_domains =
+
+alias_maps = hash:/mnt/DroboFS/Shares/DroboApps/mailserver/etc/postfix/aliases
+smtp_generic_maps = hash:/mnt/DroboFS/Shares/DroboApps/mailserver/etc/postfix/generic
+transport_maps = hash:/mnt/DroboFS/Shares/DroboApps/mailserver/etc/postfix/transport
+
+dovecot_destination_recipient_limit = 1
+virtual_transport = dovecot
+virtual_mailbox_base = /mnt/DroboFS/System/mail/vmail
+virtual_mailbox_domains = sqlite:/mnt/DroboFS/Shares/DroboApps/mailserver/etc/postfix/sql-domains.cf
+virtual_mailbox_maps = sqlite:/mnt/DroboFS/Shares/DroboApps/mailserver/etc/postfix/sql-mailboxes.cf
+virtual_minimum_uid = 5000
+virtual_gid_maps = static:5000
+virtual_uid_maps = static:5000
+virtual_alias_domains = sqlite:/mnt/DroboFS/Shares/DroboApps/mailserver/etc/postfix/sql-domain-aliases.cf
+virtual_alias_maps = sqlite:/mnt/DroboFS/Shares/DroboApps/mailserver/etc/postfix/sql-aliases.cf,
+      sqlite:/mnt/DroboFS/Shares/DroboApps/mailserver/etc/postfix/sql-domain-aliases-mailboxes.cf,
+      sqlite:/mnt/DroboFS/Shares/DroboApps/mailserver/etc/postfix/sql-catchall-aliases.cf
+
+smtpd_helo_required = yes
+smtpd_delay_reject = yes
+disable_vrfy_command = yes
+non_fqdn_reject_code = 450
+invalid_hostname_reject_code = 450
+maps_rbl_reject_code = 450
+unknown_local_recipient_reject_code = 450
+
+smtpd_recipient_restrictions =
+        permit_mynetworks
+        permit_sasl_authenticated
+        reject_unauth_destination
+        reject_invalid_helo_hostname
+        warn_if_reject reject_non_fqdn_helo_hostname
+        warn_if_reject reject_unknown_helo_hostname
+        warn_if_reject reject_unknown_client
+        reject_non_fqdn_sender
+        reject_non_fqdn_recipient
+        reject_unknown_sender_domain
+        reject_unknown_recipient_domain
+        reject_rbl_client list.dsbl.org,
+        reject_rbl_client sbl-xbl.spamhaus.org,
+        reject_rbl_client cbl.abuseat.org,
+        reject_rbl_client dul.dnsbl.sorbs.net,
+        reject_rhsbl_sender dsn.rfc-ignorant.org
+        warn_if_reject reject_rhsbl_sender dsn.rfc-ignorant.org
+        warn_if_reject reject_rhsbl_sender abuse.rfc-ignorant.org
+        warn_if_reject reject_rhsbl_sender whois.rfc-ignorant.org
+        warn_if_reject reject_rhsbl_sender bogusmx.rfc-ignorant.org
+        warn_if_reject reject_rhsbl_sender postmaster.rfc-ignorant.org
+        permit
+smtpd_data_restrictions =
+        reject_unauth_pipelining,
+        reject_multi_recipient_bounce,
+        permit
+
+smtpd_sasl_auth_enable = yes
+smtpd_sasl_type = dovecot
+smtpd_sasl_path = private/auth
+smtpd_sasl_local_domain = $mydomain
+smtpd_sasl_authenticated_header = yes
+broken_sasl_auth_clients = yes
+smtpd_sasl_security_options = noanonymous
+smtpd_sasl_exceptions_networks = $mynetworks
+
+smtp_tls_security_level = may
+smtp_tls_session_cache_database = btree:$data_directory/smtp_tls_session_cache
+#smtp_tls_CAfile = /mnt/DroboFS/System/mail/certs/ca.pem
+smtp_tls_cert_file = /mnt/DroboFS/System/mail/certs/cert.pem
+smtp_tls_key_file = /mnt/DroboFS/System/mail/certs/key.pem
+
+smtpd_tls_security_level = may
+smtpd_tls_session_cache_database = btree:$data_directory/smtpd_tls_session_cache
+#smtpd_tls_CAfile = /mnt/DroboFS/System/mail/certs/ca.pem
+smtpd_tls_cert_file = /mnt/DroboFS/System/mail/certs/cert.pem
+smtpd_tls_key_file = /mnt/DroboFS/System/mail/certs/key.pem
+#smtpd_tls_dh1024_param_file = /mnt/DroboFS/System/mail/ssl/dh_1024.pem
+#smtpd_tls_dh512_param_file = /mnt/DroboFS/System/mail/ssl/dh_512.pem
+smtpd_tls_received_header = yes
+smtpd_tls_ask_ccert = no
+smtpd_tls_loglevel = 1
+tls_random_source = dev:/dev/urandom

@@ -1,0 +1,2 @@
+dbpath = /mnt/DroboFS/System/mail/modoboa.sqlite
+query = SELECT DISTINCT mb.address || '@' || dom.name FROM admin_alias al INNER JOIN admin_domain dom ON dom.id=al.domain_id INNER JOIN admin_domainalias domal ON domal.target_id=dom.id INNER JOIN (admin_alias_mboxes almb, admin_mailbox mb) ON (almb.alias_id=al.id AND almb.mailbox_id=mb.id) WHERE domal.name='%d' AND domal.enabled=1 AND (al.address='%u' OR mb.address='%u')

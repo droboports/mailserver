@@ -1,0 +1,2 @@
+dbpath = /mnt/DroboFS/System/mail/modoboa.sqlite
+query = SELECT 1 FROM admin_mailbox mb INNER JOIN admin_domain dom ON mb.domain_id=dom.id INNER JOIN admin_user user ON mb.user_id=user.id WHERE dom.enabled=1 AND dom.name='%d' AND user.is_active=1 AND mb.address='%u'

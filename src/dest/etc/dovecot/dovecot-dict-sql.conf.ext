@@ -1,0 +1,24 @@
+driver = sqlite
+connect = /mnt/DroboFS/System/mail/modoboa.sqlite
+map {
+  pattern = priv/quota/storage
+  table = admin_quota
+  username_field = username
+  value_field = bytes
+}
+map {
+  pattern = priv/quota/messages
+  table = admin_quota
+  username_field = username
+  value_field = messages
+}
+map {
+  pattern = shared/expire/$user/$mailbox
+  table = expires
+  value_field = expire_stamp
+
+  fields {
+    username = $user
+    mailbox = $mailbox
+  }
+}

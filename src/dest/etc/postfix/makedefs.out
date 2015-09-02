@@ -1,0 +1,15 @@
+# Do not edit -- this file documents how Postfix was built for your machine.
+SYSTYPE	= LINUX3
+AR	= ar
+ARFL	= rv
+RANLIB	= ranlib
+SYSLIBS	= -L/mnt/DroboFS/Shares/DroboApps/mailserver/lib -lmysqlclient -lz -lm -lrt -ldl -lpcre -lsqlite3 -lpthread -lssl -lcrypto -ldb -lstdc++ -ldb -lnsl -lresolv
+CC	= /usr/local/arm-2010.09/bin/arm-none-linux-gnueabi-gcc -DDEF_CONFIG_DIR=\"/mnt/DroboFS/Shares/DroboApps/mailserver/etc/postfix\" -I/mnt/DroboFS/Shares/DroboApps/mailserver/include -DUSE_TLS -DHAS_MYSQL -DHAS_PCRE -DHAS_SQLITE -DUSE_SASL_AUTH -DNO_KQUEUE -DNO_NIS -DNO_SIGSETJMP
+OPT	= -Os
+DEBUG	= 
+AWK	= awk
+STRCASE = 
+EXPORT	= AUXLIBS='-L/mnt/DroboFS/Shares/DroboApps/mailserver/lib -lmysqlclient -lz -lm -lrt -ldl -lpcre -lsqlite3 -lpthread -lssl -lcrypto -ldb -lstdc++' CCARGS='-DDEF_CONFIG_DIR=\"/mnt/DroboFS/Shares/DroboApps/mailserver/etc/postfix\" -I/mnt/DroboFS/Shares/DroboApps/mailserver/include -DUSE_TLS -DHAS_MYSQL -DHAS_PCRE -DHAS_SQLITE -DUSE_SASL_AUTH -DNO_KQUEUE -DNO_NIS -DNO_SIGSETJMP' OPT='-Os' DEBUG=''
+WARN	= -Wall -Wno-comment -Wformat -Wimplicit -Wmissing-prototypes \
+	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
+	-Wunused -Wno-missing-braces

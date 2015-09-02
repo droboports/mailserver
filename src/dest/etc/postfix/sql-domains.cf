@@ -1,0 +1,2 @@
+dbpath = /mnt/DroboFS/System/mail/modoboa.sqlite
+query = SELECT name FROM admin_domain WHERE name='%s' AND enabled=1
