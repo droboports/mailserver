@@ -78,6 +78,10 @@ _fix_services() {
     echo "smtps 465/tcp # Secure SMTP" >> /etc/services
     echo "smtps 465/udp # Secure SMTP" >> /etc/services
   fi
+  if ! grep -q "submission" /etc/services; then
+    echo "submission 587/tcp # Submission [RFC4409]" >> /etc/services
+    echo "submission 587/udp # Submission [RFC4409]" >> /etc/services
+  fi
 }
 
 _python() {
@@ -108,12 +112,17 @@ _maintenance_tasks() {
 }
 
 _is_modoboa_running() {
-  ps w | grep -q "[r]unserver"
+  local pids
+  pids="$(grep -l [r]unserver /proc/*/cmdline | awk -F/ '{print $3}')"
+  if [ -n "$pids" ]; then
+    return 0
+  fi
+  return 1
 }
 
 _start_modoboa() {
-  PATH="${prog_dir}/libexec:${PATH}" HOME="${prog_dir}/www" PYTHONPATH="${prog_dir}/lib/python2.7/site-packages" setsid "${daemon}" "${prog_dir}/www/manage.py" runserver 0.0.0.0:8000 &
-  echo $! > "${pidfile}"
+  PATH="${prog_dir}/libexec:${PATH}" HOME="${prog_dir}/www" PYTHONPATH="${prog_dir}/lib/python2.7/site-packages" \
+  /sbin/start-stop-daemon -S -x "${daemon}" -p "${pidfile}" -m -b -- "${prog_dir}/www/manage.py" runserver 0.0.0.0:8000
 }
 
 _stop_modoboa() {

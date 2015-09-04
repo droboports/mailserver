@@ -13,10 +13,18 @@ $appsite = "http://modoboa.org/";
 $apppage = "http://".$_SERVER['SERVER_ADDR'].":8000/";
 $apphelp = "http://modoboa.org/en/support/";
 
+exec("/bin/sh /usr/bin/DroboApps.sh sdk_version", $out, $rc);
+if ($rc === 0) {
+  $sdkversion = $out[0];
+} else {
+  $sdkversion = "2.0";
+}
+
 $op = $_REQUEST['op'];
 switch ($op) {
   case "start":
-    exec("/usr/bin/DroboApps.sh start_app ".$app, $out, $rc);
+    unset($out);
+    exec("/bin/sh /usr/bin/DroboApps.sh start_app ".$app, $out, $rc);
     if ($rc === 0) {
       $opstatus = "okstart";
     } else {
@@ -24,7 +32,8 @@ switch ($op) {
     }
     break;
   case "stop":
-    exec("/usr/bin/DroboApps.sh stop_app ".$app, $out, $rc);
+    unset($out);
+    exec("/bin/sh /usr/bin/DroboApps.sh stop_app ".$app, $out, $rc);
     if ($rc === 0) {
       $opstatus = "okstop";
     } else {
@@ -32,7 +41,8 @@ switch ($op) {
     }
     break;
   case "reload":
-    exec("/mnt/DroboFS/Shares/DroboApps/".$app."/service.sh reload", $out, $rc);
+    unset($out);
+    exec("/bin/sh /mnt/DroboFS/Shares/DroboApps/".$app."/service.sh reload", $out, $rc);
     if ($rc === 0) {
       $opstatus = "okreload";
     } else {
@@ -47,14 +57,25 @@ switch ($op) {
     break;
 }
 
-$publicip = shell_exec("/usr/bin/wget -qO- http://ipecho.net/plain");
+unset($out);
+exec("/usr/bin/timeout -t 1 /usr/bin/wget -qO- http://ipecho.net/plain", $out, $rc);
+if ($rc === 0) {
+  $publicip = $out[0];
+} else {
+  $publicip = "";
+}
 $blacklistsite = "http://mxtoolbox.com/SuperTool.aspx?action=blacklist%3a".$publicip."&run=toolpage";
 $portscansite = "http://mxtoolbox.com/SuperTool.aspx?action=scan%3a".$publicip."&run=toolpage";
 $mxsite = "http://mxtoolbox.com/";
 $dnssite = "https://toolbox.googleapps.com/apps/checkmx/";
 
-$out = shell_exec("/usr/bin/DroboApps.sh status_app ".$app);
-if (strpos($out, "running") !== FALSE) {
+unset($out);
+exec("/usr/bin/DroboApps.sh status_app ".$app, $out, $rc);
+if ($rc !== 0) {
+  unset($out);
+  exec("/mnt/DroboFS/Shares/DroboApps/".$app."/service.sh status", $out, $rc);
+}
+if (strpos($out[0], "running") !== FALSE) {
   $apprunning = TRUE;
 } else {
   $apprunning = FALSE;
@@ -98,11 +119,15 @@ if (strpos($out, "running") !== FALSE) {
     </div>
     <div role="group" class="btn-group pull-right">
 <?php if ($apprunning) { ?>
+<?php if ($sdkversion != "2.0") { ?>
       <a role="button" class="btn btn-primary" href="?op=stop" onclick="$('#pleaseWaitDialog').modal(); return true"><span class="glyphicon glyphicon-stop"></span> Stop</a>
       <a role="button" class="btn btn-primary" href="?op=reload" onclick="$('#pleaseWaitDialog').modal(); return true"><span class="glyphicon glyphicon-repeat"></span> Reload</a>
+<?php } ?>
       <a role="button" class="btn btn-primary" href="<?php echo $apppage; ?>" target="_new"><span class="glyphicon glyphicon-globe"></span> Go to App</a>
 <?php } else { ?>
+<?php if ($sdkversion != "2.0") { ?>
       <a role="button" class="btn btn-primary" href="?op=start" onclick="$('#pleaseWaitDialog').modal(); return true"><span class="glyphicon glyphicon-play"></span> Start</a>
+<?php } ?>
       <a role="button" class="btn btn-primary disabled" href="<?php echo $apppage; ?>" target="_new"><span class="glyphicon glyphicon-globe"></span> Go to App</a>
 <?php } ?>
       <a role="button" class="btn btn-primary" href="<?php echo $apphelp; ?>" target="_new"><span class="glyphicon glyphicon-question-sign"></span> Help</a>
@@ -254,6 +279,7 @@ if (strpos($out, "running") !== FALSE) {
           <p>Make sure that your public IP address is not <a href="<?php echo $blacklistsite; ?>" target="_new">blacklisted</a>.</p>
           <p><strong>I cannot receive email.</strong></p>
           <?php if (! $apprunning) { ?><p>Make sure that mailserver is running. Currently it seems to be <strong>stopped</strong>.</p><?php } ?>
+          <?php if ($publicip == "") { ?><p>Make sure that your internet connection is working. Currently it seems your Drobo cannot retrieve its public IP address.</p><?php } ?>
           <p>Make sure that your ports are correctly forwarded and <a href="<?php echo $portscansite; ?>" target="_new">reachable from the internet</a>. If not, please contact your ISP to unblock them.</p>
           <p>Make sure that the MX records for your domain have been <a href="<?php echo $mxsite; ?>" target="_new">propagated</a>. You can also try a more comprehensive <a href="<?php echo $dnssite; ?>" target="_new">DNS check</a>.</p>
         </div>
