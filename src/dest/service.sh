@@ -154,6 +154,11 @@ start() {
   fi
 }
 
+reload() {
+  "${prog_dir}/sbin/postfix" reload
+  "${prog_dir}/sbin/dovecot" reload
+}
+
 stop() {
   _stop_modoboa
   "${prog_dir}/sbin/dovecot" stop && "${prog_dir}/sbin/postfix" stop

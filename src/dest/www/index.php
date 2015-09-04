@@ -31,6 +31,17 @@ switch ($op) {
       $opstatus = "nokstop";
     }
     break;
+  case "reload":
+    exec("/mnt/DroboFS/Shares/DroboApps/".$app."/service.sh reload", $out, $rc);
+    if ($rc === 0) {
+      $opstatus = "okreload";
+    } else {
+      $opstatus = "nokreload";
+    }
+    break;
+  case "logs":
+    $opstatus = "logs";
+    break;
   default:
     $opstatus = "noop";
     break;
@@ -38,6 +49,7 @@ switch ($op) {
 
 $publicip = shell_exec("/usr/bin/wget -qO- http://ipecho.net/plain");
 $blacklistsite = "http://mxtoolbox.com/SuperTool.aspx?action=blacklist%3a".$publicip."&run=toolpage";
+$portscansite = "http://mxtoolbox.com/SuperTool.aspx?action=scan%3a".$publicip."&run=toolpage";
 $mxsite = "http://mxtoolbox.com/";
 $dnssite = "https://toolbox.googleapps.com/apps/checkmx/";
 
@@ -80,18 +92,19 @@ if (strpos($out, "running") !== FALSE) {
 </nav>
 
 <div class="container top-toolbar">
-  <div class="btn-toolbar" role="toolbar">
-    <div class="btn-group" role="group">
-      <p class="title">About <?php echo $appname; ?> <?php echo $appversion; ?></p>
+  <div role="toolbar" class="btn-toolbar">
+    <div role="group" class="btn-group">
+      <p class="title">About <?php echo $app; ?> <?php echo $appversion; ?></p>
     </div>
     <div role="group" class="btn-group pull-right">
-      <?php if ($apprunning) { ?>
-      <a role="button" class="btn btn-primary" href="?op=stop" onclick="$('#pleaseWaitDialog').modal(); return true"><span class="glyphicon glyphicon-stop"></span> Stop App</a>
+<?php if ($apprunning) { ?>
+      <a role="button" class="btn btn-primary" href="?op=stop" onclick="$('#pleaseWaitDialog').modal(); return true"><span class="glyphicon glyphicon-stop"></span> Stop</a>
+      <a role="button" class="btn btn-primary" href="?op=reload" onclick="$('#pleaseWaitDialog').modal(); return true"><span class="glyphicon glyphicon-repeat"></span> Reload</a>
       <a role="button" class="btn btn-primary" href="<?php echo $apppage; ?>" target="_new"><span class="glyphicon glyphicon-globe"></span> Go to App</a>
-      <?php } else { ?>
-      <a role="button" class="btn btn-primary" href="?op=start" onclick="$('#pleaseWaitDialog').modal(); return true"><span class="glyphicon glyphicon-play"></span> Start App</a>
+<?php } else { ?>
+      <a role="button" class="btn btn-primary" href="?op=start" onclick="$('#pleaseWaitDialog').modal(); return true"><span class="glyphicon glyphicon-play"></span> Start</a>
       <a role="button" class="btn btn-primary disabled" href="<?php echo $apppage; ?>" target="_new"><span class="glyphicon glyphicon-globe"></span> Go to App</a>
-      <?php } ?>
+<?php } ?>
       <a role="button" class="btn btn-primary" href="<?php echo $apphelp; ?>" target="_new"><span class="glyphicon glyphicon-question-sign"></span> Help</a>
     </div>
   </div>
@@ -213,7 +226,7 @@ if (strpos($out, "running") !== FALSE) {
           <ol>
             <li>Make sure your Drobo is reachable from the internet. The following <a href="https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers" target="_new">ports</a> must be reachable from the internet (check your <a href="http://portforward.com/" target="_new">router and/or firewall documentation</a>), and must be forwarded to the Drobo:</li>
               <ul>
-                <li>Postfix: TCP:25 and TCP:465</li>
+                <li>Postfix: TCP:25, TCP:465, and TCP:587</li>
                 <li>Dovecot: TCP:110, TCP:143, TCP:993, and TCP:995</li>
                 <li>Modoboa: TCP:8000</li>
               </ul>
@@ -241,6 +254,7 @@ if (strpos($out, "running") !== FALSE) {
           <p>Make sure that your public IP address is not <a href="<?php echo $blacklistsite; ?>" target="_new">blacklisted</a>.</p>
           <p><strong>I cannot receive email.</strong></p>
           <?php if (! $apprunning) { ?><p>Make sure that mailserver is running. Currently it seems to be <strong>stopped</strong>.</p><?php } ?>
+          <p>Make sure that your ports are correctly forwarded and <a href="<?php echo $portscansite; ?>" target="_new">reachable from the internet</a>. If not, please contact your ISP to unblock them.</p>
           <p>Make sure that the MX records for your domain have been <a href="<?php echo $mxsite; ?>" target="_new">propagated</a>. You can also try a more comprehensive <a href="<?php echo $dnssite; ?>" target="_new">DNS check</a>.</p>
         </div>
       </div>
@@ -253,8 +267,13 @@ if (strpos($out, "running") !== FALSE) {
       <div class="panel-heading">
         <h4 class="panel-title"><a data-toggle="collapse" data-parent="#logfile" href="#logfilebody">Log information</a></h4>
       </div>
-      <div id="logfilebody" class="panel-collapse collapse">
+      <div id="logfilebody" class="panel-collapse collapse <?php if ($opstatus == "logs") { ?>in<?php } ?>">
         <div class="panel-body">
+          <div role="toolbar" class="btn-toolbar">
+            <div role="group" class="btn-group  pull-right">
+              <a role="button" class="btn btn-default" href="?op=logs" onclick="$('#pleaseWaitDialog').modal(); return true"><span class="glyphicon glyphicon-refresh"></span> Reload logs</a>
+            </div>
+          </div>
 <?php foreach ($applogs as $applog) { ?>
           <p>This is the content of <code><?php echo $applog; ?></code>:</p>
           <pre class="pre-scrollable">
