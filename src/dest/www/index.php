@@ -3,18 +3,47 @@ header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Cache-Control: post-check=0, pre-check=0', false);
 header('Pragma: no-cache');
 
+$app = "mailserver";
 $appname = "Modoboa mailserver";
 $appversion = "1.0.1";
 $appsite = "http://modoboa.org/";
 $apppage = "http://".$_SERVER['SERVER_ADDR'].":8000/";
 $apphelp = "http://modoboa.org/en/support/";
 
-$appret = shell_exec("/usr/bin/DroboApps.sh status_app mailserver");
-$apprunning = strpos ($appret, "running");
+$op = $_REQUEST['op'];
+switch ($op) {
+  case "start":
+    exec("/usr/bin/DroboApps.sh start_app ".$app, $out, $rc);
+    if ($rc === 0) {
+      $opstatus = "okstart";
+    } else {
+      $opstatus = "nokstart";
+    }
+    break;
+  case "stop":
+    exec("/usr/bin/DroboApps.sh stop_app ".$app, $out, $rc);
+    if ($rc === 0) {
+      $opstatus = "okstop";
+    } else {
+      $opstatus = "nokstop";
+    }
+    break;
+  default:
+    $opstatus = "noop";
+    break;
+}
+
 $publicip = shell_exec("/usr/bin/wget -qO- http://ipecho.net/plain");
 $blacklistsite = "http://mxtoolbox.com/SuperTool.aspx?action=blacklist%3a".$publicip."&run=toolpage";
 $mxsite = "http://mxtoolbox.com/";
 $dnssite = "https://toolbox.googleapps.com/apps/checkmx/";
+
+$out = shell_exec("/usr/bin/DroboApps.sh status_app ".$app);
+if (strpos($out, "running") !== FALSE) {
+  $apprunning = TRUE;
+} else {
+  $apprunning = FALSE;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -52,13 +81,70 @@ $dnssite = "https://toolbox.googleapps.com/apps/checkmx/";
     <div class="btn-group" role="group">
       <p class="title">About <?php echo $appname; ?> <?php echo $appversion; ?></p>
     </div>
-    <div class="btn-group pull-right" role="group">
-      <a class="btn btn-success" href="<?php echo $apppage; ?>" target="_new"><span class="glyphicon glyphicon-globe"></span> Go to App</a>
-      <a class="btn btn-success" href="<?php echo $apphelp; ?>" target="_new"><span class="glyphicon glyphicon-question-sign"></span> Help</a>
+    <div role="group" class="btn-group pull-right">
+      <?php if ($apprunning) { ?>
+      <a role="button" class="btn btn-primary" href="?op=stop" onclick="$('#pleaseWaitDialog').modal(); return true"><span class="glyphicon glyphicon-stop"></span> Stop App</a>
+      <a role="button" class="btn btn-primary" href="<?php echo $apppage; ?>" target="_new"><span class="glyphicon glyphicon-globe"></span> Go to App</a>
+      <?php } else { ?>
+      <a role="button" class="btn btn-primary" href="?op=start" onclick="$('#pleaseWaitDialog').modal(); return true"><span class="glyphicon glyphicon-play"></span> Start App</a>
+      <a role="button" class="btn btn-primary disabled" href="<?php echo $apppage; ?>" target="_new"><span class="glyphicon glyphicon-globe"></span> Go to App</a>
+      <?php } ?>
+      <a role="button" class="btn btn-primary" href="<?php echo $apphelp; ?>" target="_new"><span class="glyphicon glyphicon-question-sign"></span> Help</a>
     </div>
   </div>
 </div>
+
+<div role="dialog" id="pleaseWaitDialog" class="modal animated bounceIn" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <p id="myModalLabel">Operation in progress... please wait.</p>
+        <div class="progress">
+          <div class="progress-bar progress-bar-striped active" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="container">
+  <div class="row">
+    <div class="col-xs-3"></div>
+    <div class="col-xs-6">
+<?php switch ($opstatus) { ?>
+<?php case "okstart": ?>
+      <div class="alert alert-success fade in" id="opstatus">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <?php echo $appname; ?> was successfully started.
+      </div>
+<?php break; case "nokstart": ?>
+      <div class="alert alert-error fade in" id="opstatus">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <?php echo $appname; ?> failed to start. See logs below for more information.
+      </div>
+<?php break; case "okstop": ?>
+      <div class="alert alert-success fade in" id="opstatus">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <?php echo $appname; ?> was successfully stopped.
+      </div>
+<?php break; case "nokstop": ?>
+      <div class="alert alert-error fade in" id="opstatus">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <?php echo $appname; ?> failed to stop. See logs below for more information.
+      </div>
+<?php break; } ?>
+      <script>
+      window.setTimeout(function() {
+        $("#opstatus").fadeTo(500, 0).slideUp(500, function() {
+          $(this).remove(); 
+        });
+      }, 2000);
+      </script>
+    </div><!-- col -->
+    <div class="col-xs-3"></div>
+  </div><!-- row -->
+
   <div class="row">
     <div class="col-xs-12">
 
@@ -144,12 +230,14 @@ $dnssite = "https://toolbox.googleapps.com/apps/checkmx/";
       </div>
       <div id="troubleshootingbody" class="panel-collapse collapse">
         <div class="panel-body">
+          <p><strong>Error: ['[AUTHENTICATIONFAILED] Authentication failed.']</strong></p>
+          <p>Your session timed out. Please log out and log in again.</p>
           <p><strong>Error: &quot;NoReverseMatch at ... Reverse for '...' with arguments '...' and keyword arguments '...' not found.&quot;</strong></p>
           <p>Please restart mailserver. This is happening because a new extension was enabled, which requires a server restart.</p>
           <p><strong>I cannot send email.</strong></p>
           <p>Make sure that your public IP address is not <a href="<?php echo $blacklistsite; ?>" target="_new">blacklisted</a>.</p>
           <p><strong>I cannot receive email.</strong></p>
-          <?php if (! $appstatus) { ?><p>Make sure that mailserver is running. Currently it seems to be <strong>stopped</strong>.</p><?php } ?>
+          <?php if (! $apprunning) { ?><p>Make sure that mailserver is running. Currently it seems to be <strong>stopped</strong>.</p><?php } ?>
           <p>Make sure that the MX records for your domain have been <a href="<?php echo $mxsite; ?>" target="_new">propagated</a>. You can also try a more comprehensive <a href="<?php echo $dnssite; ?>" target="_new">DNS check</a>.</p>
         </div>
       </div>
@@ -164,7 +252,7 @@ $dnssite = "https://toolbox.googleapps.com/apps/checkmx/";
       </div>
       <div id="summarybody" class="panel-collapse collapse">
         <div class="panel-body">
-          <p>Changes from 1.0.0:</p>
+          <p>Changes from 1.0:</p>
           <ol>
             <li>SSL certificates and modoboa sqlite database moved to <code>/mnt/DroboFS/System/mail</code>. This will prevent loss of configuration data when the app is updated or uninstalled.</li>
             <li>Modoboa updated from 1.0.0 to 1.0.1.</li>
