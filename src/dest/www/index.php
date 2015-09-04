@@ -6,6 +6,9 @@ header('Pragma: no-cache');
 $app = "mailserver";
 $appname = "Modoboa mailserver";
 $appversion = "1.0.1";
+$applogs = array("/tmp/DroboApps/".$app."/log.txt",
+                 "/tmp/DroboApps/".$app."/dovecot.log",
+                 ":/bin/grep postfix /var/log/messages");
 $appsite = "http://modoboa.org/";
 $apppage = "http://".$_SERVER['SERVER_ADDR'].":8000/";
 $apphelp = "http://modoboa.org/en/support/";
@@ -239,6 +242,29 @@ if (strpos($out, "running") !== FALSE) {
           <p><strong>I cannot receive email.</strong></p>
           <?php if (! $apprunning) { ?><p>Make sure that mailserver is running. Currently it seems to be <strong>stopped</strong>.</p><?php } ?>
           <p>Make sure that the MX records for your domain have been <a href="<?php echo $mxsite; ?>" target="_new">propagated</a>. You can also try a more comprehensive <a href="<?php echo $dnssite; ?>" target="_new">DNS check</a>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- logfile -->
+  <div class="panel-group" id="logfile">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h4 class="panel-title"><a data-toggle="collapse" data-parent="#logfile" href="#logfilebody">Log information</a></h4>
+      </div>
+      <div id="logfilebody" class="panel-collapse collapse">
+        <div class="panel-body">
+<?php foreach ($applogs as $applog) { ?>
+          <p>This is the content of <code><?php echo $applog; ?></code>:</p>
+          <pre class="pre-scrollable">
+<?php if (substr($applog, 0, 1) === ":") {
+  echo shell_exec(substr($applog, 1));
+} else {
+  echo file_get_contents($applog);
+} ?>
+          </pre>
+<?php } ?>
         </div>
       </div>
     </div>
