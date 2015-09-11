@@ -1,5 +1,5 @@
 body {
-  padding-top: 52px;
+  padding-top: 50px;
 }
 
 .top-toolbar {
@@ -15,25 +15,9 @@ body {
   margin-bottom: 10px;
 }
 
-ul.nav li a, ul.nav li a:visited {
-  color: rgb(92, 184, 92) !important;
-}
-
-ul.nav li a:hover, ul.nav li a:active {
-  color: rgb(92, 184, 92) !important;
-}
-
-ul.nav li.active a {
-  color: rgb(76, 174, 76) !important;
-}
-
 p.title {
   margin-top: 0;
   margin-bottom: 0;
   font-size: 175%;
   font-weight: bold;
-}
-
-.alert {
- margin-top: 10px;
 }

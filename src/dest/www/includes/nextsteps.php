@@ -1,0 +1,1 @@
+<p>Configure the DNS <a href="https://support.google.com/a/answer/140034?hl=en" target="_new">MX records</a> on your domain to point to your public IP address. DNS records may take a few hours to update.</p>
